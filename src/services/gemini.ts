@@ -10,20 +10,26 @@ export async function generateWorkbookQuestions(
   difficulty: Difficulty,
   count: number
 ): Promise<Question[]> {
-  const prompt = `Generate a set of ${count} educational questions for a primary school workbook.
+  const prompt = `You are an expert UK primary school teacher. Generate a set of ${count} educational questions for a primary school workbook.
+    Year Group: ${grade} (UK National Curriculum)
     Subject: ${subject}
     Topic: ${topic}
-    Grade Level: ${grade}
     Difficulty: ${difficulty}
     
-    The questions should be age-appropriate, engaging, and follow a step-by-step learning progression.
-    Difficulty Level Details:
-    - Easy: Basic concepts, simple language, direct questions.
-    - Medium: Application of concepts, slightly more complex scenarios.
-    - Hard: Critical thinking, multi-step problems, advanced vocabulary for the grade level.
+    The questions MUST be strictly aligned with the UK National Curriculum for ${grade}.
+    Difficulty Level Guidelines:
+    - Easy: Foundational knowledge, simple wording, direct recall.
+    - Medium: Application of knowledge, multi-step thinking, varied question formats.
+    - Hard: Complex problem solving, reasoning, and higher-order thinking skills.
     
-    Include a mix of multiple-choice and short-answer questions.
-    Provide the correct answer and a brief explanation for each.`;
+    Format:
+    - Prefer multiple-choice questions (with 4 options) for better quiz experience.
+    - For multiple-choice, provide the options array.
+    - For short-answer, leave the options array empty or null.
+    - Provide a clear, child-friendly explanation for each answer.
+    - For each question, provide a 'topicArea' (e.g., 'Addition', 'Punctuation', 'Habitats') to help identify areas for improvement.
+    - Ensure the content is engaging and age-appropriate for ${grade} students.
+    - DO NOT include topics that are too advanced or too basic for this specific year group.`;
 
   const response = await ai.models.generateContent({
     model: "gemini-3-flash-preview",
@@ -43,9 +49,10 @@ export async function generateWorkbookQuestions(
               description: "Optional: Provide 4 options for multiple choice questions"
             },
             answer: { type: Type.STRING },
-            explanation: { type: Type.STRING }
+            explanation: { type: Type.STRING },
+            topicArea: { type: Type.STRING, description: "The specific sub-topic this question covers" }
           },
-          required: ["id", "text", "answer"]
+          required: ["id", "text", "answer", "topicArea"]
         }
       }
     }

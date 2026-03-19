@@ -27,7 +27,6 @@ import {
   User,
   Leaf,
   Sun,
-  Zap,
   Globe,
   Cloud,
   Settings,
@@ -50,11 +49,30 @@ import {
   UserCircle,
   Flag,
   ArrowLeft,
-  Trophy as TrophyIcon,
-  Zap as ZapIcon,
-  Smile
+  Smile,
+  Zap,
+  Calendar,
+  Music,
+  CloudRain,
+  Gamepad2,
+  Crown,
+  Compass,
+  Link,
+  Bug,
+  Apple,
+  Plane,
+  MapPin,
+  Camera,
+  Palmtree,
+  BarChart,
+  Mountain,
+  Sword,
+  Triangle,
+  FlaskConical,
+  Ship,
+  Lock
 } from 'lucide-react';
-import { SUBJECTS, TOPICS, Subject, Workbook, Question, Difficulty } from './types';
+import { SUBJECTS, YEARS, TOPICS_BY_YEAR, Subject, Workbook, Question, Difficulty, YearGroup } from './types';
 import { generateWorkbookQuestions } from './services/gemini';
 import { downloadWorksheetPDF } from './services/pdfService';
 import { STATIC_QUESTION_BANK } from './data/questionBank';
@@ -70,20 +88,39 @@ const ICON_MAP: Record<string, React.ElementType> = {
   User, Leaf, Sun, Zap, Globe, Cloud, Settings,
   Type, Book, FileText, PenTool, Hash, Edit3, Layers,
   History, Map, Shield, Users, Home, DollarSign,
-  PawPrint, Lightbulb, Trophy, Star, UserCircle, Flag
+  PawPrint, Lightbulb, Trophy, Star, UserCircle, Flag,
+  Calendar, Music, CloudRain, Gamepad2, Crown, Compass,
+  Link, Bug, Apple, Plane, MapPin, Camera, Palmtree,
+  BarChart, Mountain, Sword, Triangle, FlaskConical,
+  Ship, Lock
 };
 
 export default function App() {
   const [selectedSubject, setSelectedSubject] = useState<Subject>(SUBJECTS[0]);
   const [selectedTopic, setSelectedTopic] = useState<string | null>(null);
-  const [grade, setGrade] = useState<string>('Grade 3');
+  const [yearGroup, setYearGroup] = useState<YearGroup>(YEARS[2]); // Default to Year 3
   const [difficulty, setDifficulty] = useState<Difficulty>('Medium');
   const [isGenerating, setIsGenerating] = useState(false);
   const [workbook, setWorkbook] = useState<Workbook | null>(null);
   const [showAnswers, setShowAnswers] = useState(false);
   const [mode, setMode] = useState<'ai' | 'library'>('ai');
+  const [quizState, setQuizState] = useState<{
+    isActive: boolean;
+    currentQuestionIndex: number;
+    userAnswers: Record<string, string>;
+    results: {
+      score: number;
+      total: number;
+      improvements: string[];
+    } | null;
+  }>({
+    isActive: false,
+    currentQuestionIndex: 0,
+    userAnswers: {},
+    results: null
+  });
 
-  const currentTopics = useMemo(() => TOPICS[selectedSubject], [selectedSubject]);
+  const currentTopics = useMemo(() => TOPICS_BY_YEAR[yearGroup][selectedSubject], [yearGroup, selectedSubject]);
 
   const handleSubjectChange = (subject: Subject) => {
     setSelectedSubject(subject);
@@ -104,17 +141,23 @@ export default function App() {
     setSelectedTopic(topicName);
     setIsGenerating(true);
     setWorkbook(null);
+    setQuizState({
+      isActive: false,
+      currentQuestionIndex: 0,
+      userAnswers: {},
+      results: null
+    });
     try {
       let questions: Question[] = [];
       const count = getQuestionCount(difficulty);
 
       if (mode === 'ai') {
-        questions = await generateWorkbookQuestions(selectedSubject, topicName, grade, difficulty, count);
+        questions = await generateWorkbookQuestions(selectedSubject, topicName, yearGroup, difficulty, count);
       } else {
         // Library mode
         const libraryQuestions = STATIC_QUESTION_BANK[selectedSubject]?.[topicName] || [];
         if (libraryQuestions.length === 0) {
-          questions = await generateWorkbookQuestions(selectedSubject, topicName, grade, difficulty, count);
+          questions = await generateWorkbookQuestions(selectedSubject, topicName, yearGroup, difficulty, count);
         } else {
           questions = libraryQuestions.slice(0, count);
         }
@@ -124,7 +167,7 @@ export default function App() {
         title: `${topicName} Mastery Workbook`,
         subject: selectedSubject,
         topic: topicName,
-        grade: grade,
+        grade: yearGroup,
         difficulty: difficulty,
         questions
       });
@@ -133,6 +176,55 @@ export default function App() {
     } finally {
       setIsGenerating(false);
     }
+  };
+
+  const handleStartQuiz = () => {
+    if (!workbook) return;
+    setQuizState({
+      isActive: true,
+      currentQuestionIndex: 0,
+      userAnswers: {},
+      results: null
+    });
+  };
+
+  const handleAnswer = (questionId: string, answer: string) => {
+    setQuizState(prev => ({
+      ...prev,
+      userAnswers: { ...prev.userAnswers, [questionId]: answer }
+    }));
+  };
+
+  const handleNextQuestion = () => {
+    setQuizState(prev => ({
+      ...prev,
+      currentQuestionIndex: prev.currentQuestionIndex + 1
+    }));
+  };
+
+  const handleFinishQuiz = () => {
+    if (!workbook) return;
+    
+    let score = 0;
+    const wrongTopicAreas = new Set<string>();
+    
+    workbook.questions.forEach(q => {
+      if (quizState.userAnswers[q.id] === q.answer) {
+        score++;
+      } else {
+        if (q.topicArea) wrongTopicAreas.add(q.topicArea);
+      }
+    });
+    
+    setQuizState(prev => ({
+      ...prev,
+      isActive: false,
+      results: {
+        score,
+        total: workbook.questions.length,
+        improvements: Array.from(wrongTopicAreas)
+      }
+    }));
   };
 
   return (
@@ -150,7 +242,11 @@ export default function App() {
             <div className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-600">
               <a href="#how-it-works" className="hover:text-indigo-600 transition-colors">How it Works</a>
               <button 
-                onClick={() => { setWorkbook(null); setSelectedTopic(null); }}
+                onClick={() => { 
+                  setWorkbook(null); 
+                  setSelectedTopic(null); 
+                  setQuizState({ isActive: false, currentQuestionIndex: 0, userAnswers: {}, results: null });
+                }}
                 className="hover:text-indigo-600 transition-colors"
               >
                 Create New
@@ -173,7 +269,7 @@ export default function App() {
               transition={{ duration: 0.5 }}
             >
               <span className="inline-block py-1 px-3 rounded-full bg-indigo-50 text-indigo-600 text-xs font-bold uppercase tracking-wider mb-4">
-                Personalized Learning
+                UK National Curriculum
               </span>
               <h1 className="text-5xl md:text-6xl font-extrabold text-slate-900 mb-6 tracking-tight">
                 What are we learning <br />
@@ -185,104 +281,106 @@ export default function App() {
 
         <div className="grid lg:grid-cols-12 gap-8">
           {/* Sidebar Settings */}
-          <div className="lg:col-span-3 space-y-6">
-            <section className="bg-white p-6 rounded-3xl border border-slate-100 shadow-xl shadow-slate-200/50">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-lg font-bold flex items-center gap-2">
-                  <Layout className="text-indigo-600" size={18} />
-                  Settings
-                </h2>
-                <div className="flex bg-slate-100 p-1 rounded-lg">
-                  <button 
-                    onClick={() => setMode('ai')}
-                    className={cn("px-2 py-1 text-[10px] font-bold rounded-md transition-all", mode === 'ai' ? "bg-white text-indigo-600 shadow-sm" : "text-slate-500")}
-                  >
-                    AI
-                  </button>
-                  <button 
-                    onClick={() => setMode('library')}
-                    className={cn("px-2 py-1 text-[10px] font-bold rounded-md transition-all", mode === 'library' ? "bg-white text-indigo-600 shadow-sm" : "text-slate-500")}
-                  >
-                    Library
-                  </button>
-                </div>
-              </div>
-              
-              <div className="space-y-6">
-                <div>
-                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Grade</label>
-                  <div className="grid grid-cols-3 gap-2">
-                    {['G1', 'G2', 'G3', 'G4', 'G5'].map((g) => (
-                      <button
-                        key={g}
-                        onClick={() => setGrade(`Grade ${g.slice(1)}`)}
-                        className={cn(
-                          "py-2 rounded-xl text-xs font-bold transition-all border",
-                          grade === `Grade ${g.slice(1)}`
-                            ? "bg-slate-900 border-slate-900 text-white" 
-                            : "bg-white border-slate-200 text-slate-600 hover:border-indigo-300"
-                        )}
-                      >
-                        {g}
-                      </button>
-                    ))}
+          {!quizState.isActive && (
+            <div className="lg:col-span-3 space-y-6">
+              <section className="bg-white p-6 rounded-3xl border border-slate-100 shadow-xl shadow-slate-200/50">
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className="text-lg font-bold flex items-center gap-2">
+                    <Layout className="text-indigo-600" size={18} />
+                    Settings
+                  </h2>
+                  <div className="flex bg-slate-100 p-1 rounded-lg">
+                    <button 
+                      onClick={() => setMode('ai')}
+                      className={cn("px-2 py-1 text-[10px] font-bold rounded-md transition-all", mode === 'ai' ? "bg-white text-indigo-600 shadow-sm" : "text-slate-500")}
+                    >
+                      AI
+                    </button>
+                    <button 
+                      onClick={() => setMode('library')}
+                      className={cn("px-2 py-1 text-[10px] font-bold rounded-md transition-all", mode === 'library' ? "bg-white text-indigo-600 shadow-sm" : "text-slate-500")}
+                    >
+                      Library
+                    </button>
                   </div>
                 </div>
+                
+                <div className="space-y-6">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Year Group</label>
+                    <div className="grid grid-cols-3 gap-2">
+                      {YEARS.map((y) => (
+                        <button
+                          key={y}
+                          onClick={() => setYearGroup(y)}
+                          className={cn(
+                            "py-2 rounded-xl text-xs font-bold transition-all border",
+                            yearGroup === y
+                              ? "bg-slate-900 border-slate-900 text-white" 
+                              : "bg-white border-slate-200 text-slate-600 hover:border-indigo-300"
+                          )}
+                        >
+                          {y.replace('Year ', 'Y')}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
 
-                <div>
-                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Difficulty</label>
-                  <div className="space-y-2">
-                    {[
-                      { id: 'Easy', icon: Smile, color: 'text-emerald-500', bg: 'bg-emerald-50' },
-                      { id: 'Medium', icon: ZapIcon, color: 'text-amber-500', bg: 'bg-amber-50' },
-                      { id: 'Hard', icon: TrophyIcon, color: 'text-rose-500', bg: 'bg-rose-50' }
-                    ].map((d) => (
-                      <button
-                        key={d.id}
-                        onClick={() => setDifficulty(d.id as Difficulty)}
-                        className={cn(
-                          "w-full flex items-center gap-3 p-3 rounded-xl border text-sm transition-all",
-                          difficulty === d.id 
-                            ? "bg-indigo-600 border-indigo-600 text-white shadow-md" 
-                            : "bg-white border-slate-200 text-slate-600 hover:border-indigo-300"
-                        )}
-                      >
-                        <d.icon size={16} className={difficulty === d.id ? "text-white" : d.color} />
-                        <span className="font-medium">{d.id}</span>
-                        <span className={cn("ml-auto text-[10px] px-1.5 py-0.5 rounded-md", difficulty === d.id ? "bg-white/20" : d.bg, difficulty === d.id ? "text-white" : d.color)}>
-                          {getQuestionCount(d.id as Difficulty)} Qs
-                        </span>
-                      </button>
-                    ))}
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Difficulty</label>
+                    <div className="space-y-2">
+                      {[
+                        { id: 'Easy', icon: Smile, color: 'text-emerald-500', bg: 'bg-emerald-50' },
+                        { id: 'Medium', icon: Zap, color: 'text-amber-500', bg: 'bg-amber-50' },
+                        { id: 'Hard', icon: Trophy, color: 'text-rose-500', bg: 'bg-rose-50' }
+                      ].map((d) => (
+                        <button
+                          key={d.id}
+                          onClick={() => setDifficulty(d.id as Difficulty)}
+                          className={cn(
+                            "w-full flex items-center gap-3 p-3 rounded-xl border text-sm transition-all",
+                            difficulty === d.id 
+                              ? "bg-indigo-600 border-indigo-600 text-white shadow-md" 
+                              : "bg-white border-slate-200 text-slate-600 hover:border-indigo-300"
+                          )}
+                        >
+                          <d.icon size={16} className={difficulty === d.id ? "text-white" : d.color} />
+                          <span className="font-medium">{d.id}</span>
+                          <span className={cn("ml-auto text-[10px] px-1.5 py-0.5 rounded-md", difficulty === d.id ? "bg-white/20" : d.bg, difficulty === d.id ? "text-white" : d.color)}>
+                            {getQuestionCount(d.id as Difficulty)} Qs
+                          </span>
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                </div>
 
-                <div>
-                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Subject</label>
-                  <div className="space-y-2">
-                    {SUBJECTS.map((sub) => (
-                      <button
-                        key={sub}
-                        onClick={() => handleSubjectChange(sub)}
-                        className={cn(
-                          "w-full flex items-center justify-between p-3 rounded-xl border text-sm transition-all text-left",
-                          selectedSubject === sub 
-                            ? "bg-indigo-600 border-indigo-600 text-white shadow-md" 
-                            : "bg-white border-slate-200 text-slate-600 hover:border-indigo-300"
-                        )}
-                      >
-                        {sub}
-                        {selectedSubject === sub && <ChevronRight size={14} />}
-                      </button>
-                    ))}
+                  <div>
+                    <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Subject</label>
+                    <div className="space-y-2">
+                      {SUBJECTS.map((sub) => (
+                        <button
+                          key={sub}
+                          onClick={() => handleSubjectChange(sub)}
+                          className={cn(
+                            "w-full flex items-center justify-between p-3 rounded-xl border text-sm transition-all text-left",
+                            selectedSubject === sub 
+                              ? "bg-indigo-600 border-indigo-600 text-white shadow-md" 
+                              : "bg-white border-slate-200 text-slate-600 hover:border-indigo-300"
+                          )}
+                        >
+                          {sub}
+                          {selectedSubject === sub && <ChevronRight size={14} />}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 </div>
-              </div>
-            </section>
-          </div>
+              </section>
+            </div>
+          )}
 
           {/* Main Content Area */}
-          <div className="lg:col-span-9">
+          <div className={cn(quizState.isActive ? "lg:col-span-12" : "lg:col-span-9")}>
             <AnimatePresence mode="wait">
               {!workbook && !isGenerating && (
                 <motion.div
@@ -344,11 +442,11 @@ export default function App() {
                   <h3 className="text-2xl font-bold text-slate-800 mb-2">
                     {mode === 'ai' ? 'AI is Thinking...' : 'Fetching Library Content...'}
                   </h3>
-                  <p className="text-slate-500">Preparing your {difficulty} level {grade} {selectedSubject} worksheet.</p>
+                  <p className="text-slate-500">Preparing your {difficulty} level {yearGroup} {selectedSubject} worksheet.</p>
                 </motion.div>
               )}
 
-              {workbook && (
+              {workbook && !quizState.isActive && !quizState.results && (
                 <motion.div
                   key="content"
                   initial={{ opacity: 0, scale: 0.98 }}
@@ -378,19 +476,16 @@ export default function App() {
                           )}>
                             {workbook.difficulty}
                           </span>
-                          <span className="w-1 h-1 bg-slate-300 rounded-full"></span>
-                          <span className="bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded text-[10px] font-bold uppercase">
-                            {mode === 'ai' ? 'AI Generated' : 'Library Content'}
-                          </span>
                         </div>
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
                       <button
-                        onClick={() => setShowAnswers(!showAnswers)}
-                        className="px-4 py-2 text-sm font-bold text-slate-600 hover:bg-slate-50 rounded-xl transition-all"
+                        onClick={handleStartQuiz}
+                        className="flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white rounded-xl font-bold hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100"
                       >
-                        {showAnswers ? 'Hide Answers' : 'Show Answers'}
+                        <BrainCircuit size={18} />
+                        Start Quiz
                       </button>
                       <button
                         onClick={() => downloadWorksheetPDF(workbook)}
@@ -428,26 +523,6 @@ export default function App() {
                                   ))}
                                 </div>
                               )}
-
-                              {showAnswers && (
-                                <motion.div
-                                  initial={{ opacity: 0, height: 0 }}
-                                  animate={{ opacity: 1, height: 'auto' }}
-                                  className="mt-4 p-5 bg-emerald-50 rounded-2xl border border-emerald-100"
-                                >
-                                  <div className="flex items-start gap-3">
-                                    <CheckCircle2 className="text-emerald-600 mt-0.5" size={18} />
-                                    <div>
-                                      <p className="text-sm font-bold text-emerald-900">Correct Answer: {q.answer}</p>
-                                      {q.explanation && (
-                                        <p className="text-sm text-emerald-700 mt-1 leading-relaxed">
-                                          {q.explanation}
-                                        </p>
-                                      )}
-                                    </div>
-                                  </div>
-                                </motion.div>
-                              )}
                             </div>
                           </div>
                           {idx < workbook.questions.length - 1 && (
@@ -465,6 +540,167 @@ export default function App() {
                       >
                         <Download size={20} />
                         Get Your Free Worksheet
+                      </button>
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+
+              {quizState.isActive && workbook && (
+                <motion.div
+                  key="quiz"
+                  initial={{ opacity: 0, scale: 0.98 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="max-w-3xl mx-auto space-y-8"
+                >
+                  <div className="flex items-center justify-between mb-8">
+                    <div className="flex items-center gap-4">
+                      <button 
+                        onClick={() => setQuizState(prev => ({ ...prev, isActive: false }))}
+                        className="p-2 hover:bg-slate-100 rounded-xl transition-all text-slate-400"
+                      >
+                        <X size={20} />
+                      </button>
+                      <h2 className="text-xl font-bold">Quiz: {workbook.topic}</h2>
+                    </div>
+                    <div className="text-sm font-bold text-slate-500">
+                      Question {quizState.currentQuestionIndex + 1} of {workbook.questions.length}
+                    </div>
+                  </div>
+
+                  <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden mb-8">
+                    <motion.div 
+                      className="bg-indigo-600 h-full"
+                      initial={{ width: 0 }}
+                      animate={{ width: `${((quizState.currentQuestionIndex + 1) / workbook.questions.length) * 100}%` }}
+                    />
+                  </div>
+
+                  <div className="bg-white p-8 rounded-3xl border border-slate-100 shadow-xl">
+                    <h3 className="text-2xl font-bold text-slate-800 mb-8">
+                      {workbook.questions[quizState.currentQuestionIndex].text}
+                    </h3>
+
+                    <div className="space-y-4">
+                      {workbook.questions[quizState.currentQuestionIndex].options ? (
+                        workbook.questions[quizState.currentQuestionIndex].options?.map((opt, idx) => (
+                          <button
+                            key={idx}
+                            onClick={() => handleAnswer(workbook.questions[quizState.currentQuestionIndex].id, opt)}
+                            className={cn(
+                              "w-full p-6 text-left rounded-2xl border-2 transition-all flex items-center gap-4",
+                              quizState.userAnswers[workbook.questions[quizState.currentQuestionIndex].id] === opt
+                                ? "border-indigo-600 bg-indigo-50 text-indigo-700"
+                                : "border-slate-100 hover:border-indigo-200 hover:bg-slate-50"
+                            )}
+                          >
+                            <div className={cn(
+                              "w-8 h-8 rounded-full flex items-center justify-center font-bold",
+                              quizState.userAnswers[workbook.questions[quizState.currentQuestionIndex].id] === opt
+                                ? "bg-indigo-600 text-white"
+                                : "bg-slate-100 text-slate-400"
+                            )}>
+                              {String.fromCharCode(65 + idx)}
+                            </div>
+                            {opt}
+                          </button>
+                        ))
+                      ) : (
+                        <input
+                          type="text"
+                          placeholder="Type your answer here..."
+                          className="w-full p-6 rounded-2xl border-2 border-slate-100 focus:border-indigo-600 outline-none transition-all"
+                          value={quizState.userAnswers[workbook.questions[quizState.currentQuestionIndex].id] || ''}
+                          onChange={(e) => handleAnswer(workbook.questions[quizState.currentQuestionIndex].id, e.target.value)}
+                        />
+                      )}
+                    </div>
+
+                    <div className="mt-12 flex justify-end">
+                      {quizState.currentQuestionIndex < workbook.questions.length - 1 ? (
+                        <button
+                          disabled={!quizState.userAnswers[workbook.questions[quizState.currentQuestionIndex].id]}
+                          onClick={handleNextQuestion}
+                          className="px-8 py-4 bg-indigo-600 text-white rounded-2xl font-bold hover:bg-indigo-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                        >
+                          Next Question <ChevronRight size={18} />
+                        </button>
+                      ) : (
+                        <button
+                          disabled={!quizState.userAnswers[workbook.questions[quizState.currentQuestionIndex].id]}
+                          onClick={handleFinishQuiz}
+                          className="px-8 py-4 bg-indigo-600 text-white rounded-2xl font-bold hover:bg-indigo-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                        >
+                          Finish Quiz <CheckCircle2 size={18} />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </motion.div>
+              )}
+
+              {quizState.results && (
+                <motion.div
+                  key="results"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="max-w-3xl mx-auto space-y-8"
+                >
+                  <div className="bg-white p-12 rounded-3xl border border-slate-100 shadow-xl text-center">
+                    <div className="w-24 h-24 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                      <Trophy size={48} />
+                    </div>
+                    <h2 className="text-3xl font-bold text-slate-900 mb-2">Quiz Complete!</h2>
+                    <p className="text-slate-500 mb-8">Great effort on your {workbook?.topic} quiz.</p>
+                    
+                    <div className="text-6xl font-black text-indigo-600 mb-8">
+                      {quizState.results.score} / {quizState.results.total}
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4 mb-12">
+                      <div className="bg-emerald-50 p-4 rounded-2xl">
+                        <div className="text-2xl font-bold text-emerald-600">{Math.round((quizState.results.score / quizState.results.total) * 100)}%</div>
+                        <div className="text-xs font-bold text-emerald-700 uppercase tracking-wider">Accuracy</div>
+                      </div>
+                      <div className="bg-amber-50 p-4 rounded-2xl">
+                        <div className="text-2xl font-bold text-amber-600">{quizState.results.total - quizState.results.score}</div>
+                        <div className="text-xs font-bold text-amber-700 uppercase tracking-wider">Mistakes</div>
+                      </div>
+                    </div>
+
+                    {quizState.results.improvements.length > 0 && (
+                      <div className="text-left bg-slate-50 p-8 rounded-2xl border border-slate-100 mb-8">
+                        <h3 className="font-bold text-slate-800 mb-4 flex items-center gap-2">
+                          <Info size={18} className="text-indigo-600" />
+                          Improvements Needed
+                        </h3>
+                        <p className="text-sm text-slate-600 mb-4">Focus on these areas to get a better score next time:</p>
+                        <div className="flex flex-wrap gap-2">
+                          {quizState.results.improvements.map((area, idx) => (
+                            <span key={idx} className="px-3 py-1 bg-white border border-slate-200 rounded-lg text-xs font-bold text-slate-700">
+                              {area}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                      <button
+                        onClick={() => {
+                          setWorkbook(null);
+                          setSelectedTopic(null);
+                          setQuizState({ isActive: false, currentQuestionIndex: 0, userAnswers: {}, results: null });
+                        }}
+                        className="px-8 py-4 bg-slate-900 text-white rounded-2xl font-bold hover:bg-slate-800 transition-all"
+                      >
+                        Try Another Topic
+                      </button>
+                      <button
+                        onClick={() => setQuizState({ isActive: false, currentQuestionIndex: 0, userAnswers: {}, results: null })}
+                        className="px-8 py-4 bg-white border border-slate-200 text-slate-600 rounded-2xl font-bold hover:bg-slate-50 transition-all"
+                      >
+                        Review Worksheet
                       </button>
                     </div>
                   </div>
