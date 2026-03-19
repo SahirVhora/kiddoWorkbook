@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
   BookOpen, 
@@ -16,9 +16,45 @@ import {
   Wand2,
   MousePointer2,
   FileDown,
-  HelpCircle
+  HelpCircle,
+  Plus,
+  X,
+  PieChart,
+  Square,
+  MessageSquare,
+  Clock,
+  Repeat,
+  User,
+  Leaf,
+  Sun,
+  Zap,
+  Globe,
+  Cloud,
+  Settings,
+  Type,
+  Book,
+  PenTool,
+  Hash,
+  Edit3,
+  Layers,
+  History,
+  Map,
+  Shield,
+  Users,
+  Home,
+  DollarSign,
+  PawPrint,
+  Lightbulb,
+  Trophy,
+  Star,
+  UserCircle,
+  Flag,
+  ArrowLeft,
+  Trophy as TrophyIcon,
+  Zap as ZapIcon,
+  Smile
 } from 'lucide-react';
-import { SUBJECTS, TOPICS, Subject, Workbook, Question } from './types';
+import { SUBJECTS, TOPICS, Subject, Workbook, Question, Difficulty } from './types';
 import { generateWorkbookQuestions } from './services/gemini';
 import { downloadWorksheetPDF } from './services/pdfService';
 import { STATIC_QUESTION_BANK } from './data/questionBank';
@@ -29,43 +65,67 @@ function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+const ICON_MAP: Record<string, React.ElementType> = {
+  Plus, X, PieChart, Square, MessageSquare, Clock, Repeat,
+  User, Leaf, Sun, Zap, Globe, Cloud, Settings,
+  Type, Book, FileText, PenTool, Hash, Edit3, Layers,
+  History, Map, Shield, Users, Home, DollarSign,
+  PawPrint, Lightbulb, Trophy, Star, UserCircle, Flag
+};
+
 export default function App() {
   const [selectedSubject, setSelectedSubject] = useState<Subject>(SUBJECTS[0]);
-  const [selectedTopic, setSelectedTopic] = useState<string>(TOPICS[SUBJECTS[0]][0]);
+  const [selectedTopic, setSelectedTopic] = useState<string | null>(null);
   const [grade, setGrade] = useState<string>('Grade 3');
+  const [difficulty, setDifficulty] = useState<Difficulty>('Medium');
   const [isGenerating, setIsGenerating] = useState(false);
   const [workbook, setWorkbook] = useState<Workbook | null>(null);
   const [showAnswers, setShowAnswers] = useState(false);
   const [mode, setMode] = useState<'ai' | 'library'>('ai');
 
+  const currentTopics = useMemo(() => TOPICS[selectedSubject], [selectedSubject]);
+
   const handleSubjectChange = (subject: Subject) => {
     setSelectedSubject(subject);
-    setSelectedTopic(TOPICS[subject][0]);
+    setSelectedTopic(null);
+    setWorkbook(null);
   };
 
-  const handleGenerate = async () => {
+  const getQuestionCount = (diff: Difficulty) => {
+    switch (diff) {
+      case 'Easy': return 5;
+      case 'Medium': return 10;
+      case 'Hard': return 15;
+      default: return 10;
+    }
+  };
+
+  const handleGenerate = async (topicName: string) => {
+    setSelectedTopic(topicName);
     setIsGenerating(true);
     setWorkbook(null);
     try {
       let questions: Question[] = [];
+      const count = getQuestionCount(difficulty);
+
       if (mode === 'ai') {
-        questions = await generateWorkbookQuestions(selectedSubject, selectedTopic, grade);
+        questions = await generateWorkbookQuestions(selectedSubject, topicName, grade, difficulty, count);
       } else {
         // Library mode
-        const libraryQuestions = STATIC_QUESTION_BANK[selectedSubject]?.[selectedTopic] || [];
+        const libraryQuestions = STATIC_QUESTION_BANK[selectedSubject]?.[topicName] || [];
         if (libraryQuestions.length === 0) {
-          // Fallback to AI if library is empty for this topic
-          questions = await generateWorkbookQuestions(selectedSubject, selectedTopic, grade);
+          questions = await generateWorkbookQuestions(selectedSubject, topicName, grade, difficulty, count);
         } else {
-          questions = libraryQuestions;
+          questions = libraryQuestions.slice(0, count);
         }
       }
 
       setWorkbook({
-        title: `${selectedTopic} Mastery Workbook`,
+        title: `${topicName} Mastery Workbook`,
         subject: selectedSubject,
-        topic: selectedTopic,
+        topic: topicName,
         grade: grade,
+        difficulty: difficulty,
         questions
       });
     } catch (error) {
@@ -89,7 +149,12 @@ export default function App() {
             </div>
             <div className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-600">
               <a href="#how-it-works" className="hover:text-indigo-600 transition-colors">How it Works</a>
-              <a href="#" className="hover:text-indigo-600 transition-colors">Subjects</a>
+              <button 
+                onClick={() => { setWorkbook(null); setSelectedTopic(null); }}
+                className="hover:text-indigo-600 transition-colors"
+              >
+                Create New
+              </button>
               <button className="bg-slate-900 text-white px-5 py-2 rounded-full hover:bg-slate-800 transition-all shadow-sm">
                 Get Started
               </button>
@@ -100,62 +165,43 @@ export default function App() {
 
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Hero Section */}
-        <div className="text-center mb-16">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-          >
-            <span className="inline-block py-1 px-3 rounded-full bg-indigo-50 text-indigo-600 text-xs font-bold uppercase tracking-wider mb-4">
-              Free Educational Resource
-            </span>
-            <h1 className="text-5xl md:text-6xl font-extrabold text-slate-900 mb-6 tracking-tight">
-              Custom Workbooks for <br />
-              <span className="text-indigo-600">Every Child.</span>
-            </h1>
-            <p className="text-lg text-slate-600 max-w-2xl mx-auto mb-10 leading-relaxed">
-              Whether you're a parent or teacher, KiddoWorkbooks helps you create professional learning materials in seconds. 
-              Completely free and easy to use.
-            </p>
-          </motion.div>
-        </div>
+        {!workbook && !isGenerating && (
+          <div className="text-center mb-12">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+            >
+              <span className="inline-block py-1 px-3 rounded-full bg-indigo-50 text-indigo-600 text-xs font-bold uppercase tracking-wider mb-4">
+                Personalized Learning
+              </span>
+              <h1 className="text-5xl md:text-6xl font-extrabold text-slate-900 mb-6 tracking-tight">
+                What are we learning <br />
+                <span className="text-indigo-600">today?</span>
+              </h1>
+            </motion.div>
+          </div>
+        )}
 
-        {/* How it Works for Non-Technical Users */}
-        <div id="how-it-works" className="grid md:grid-cols-3 gap-8 mb-20">
-          {[
-            { icon: MousePointer2, title: "1. Choose Subject", desc: "Select a subject and topic your child is currently learning." },
-            { icon: Wand2, title: "2. Generate", desc: "Use our AI or browse our library to create a set of questions." },
-            { icon: FileDown, title: "3. Download PDF", desc: "Get a professional worksheet ready for printing and practice." }
-          ].map((step, i) => (
-            <div key={i} className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm flex flex-col items-center text-center">
-              <div className="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-full flex items-center justify-center mb-4">
-                <step.icon size={24} />
-              </div>
-              <h3 className="font-bold text-slate-800 mb-2">{step.title}</h3>
-              <p className="text-sm text-slate-500 leading-relaxed">{step.desc}</p>
-            </div>
-          ))}
-        </div>
-
-        <div className="grid lg:grid-cols-12 gap-12">
-          {/* Configuration Panel */}
-          <div className="lg:col-span-4 space-y-8">
-            <section className="bg-white p-8 rounded-3xl border border-slate-100 shadow-xl shadow-slate-200/50">
+        <div className="grid lg:grid-cols-12 gap-8">
+          {/* Sidebar Settings */}
+          <div className="lg:col-span-3 space-y-6">
+            <section className="bg-white p-6 rounded-3xl border border-slate-100 shadow-xl shadow-slate-200/50">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold flex items-center gap-2">
-                  <Layout className="text-indigo-600" size={20} />
+                <h2 className="text-lg font-bold flex items-center gap-2">
+                  <Layout className="text-indigo-600" size={18} />
                   Settings
                 </h2>
                 <div className="flex bg-slate-100 p-1 rounded-lg">
                   <button 
                     onClick={() => setMode('ai')}
-                    className={cn("px-3 py-1 text-xs font-bold rounded-md transition-all", mode === 'ai' ? "bg-white text-indigo-600 shadow-sm" : "text-slate-500")}
+                    className={cn("px-2 py-1 text-[10px] font-bold rounded-md transition-all", mode === 'ai' ? "bg-white text-indigo-600 shadow-sm" : "text-slate-500")}
                   >
                     AI
                   </button>
                   <button 
                     onClick={() => setMode('library')}
-                    className={cn("px-3 py-1 text-xs font-bold rounded-md transition-all", mode === 'library' ? "bg-white text-indigo-600 shadow-sm" : "text-slate-500")}
+                    className={cn("px-2 py-1 text-[10px] font-bold rounded-md transition-all", mode === 'library' ? "bg-white text-indigo-600 shadow-sm" : "text-slate-500")}
                   >
                     Library
                   </button>
@@ -164,54 +210,17 @@ export default function App() {
               
               <div className="space-y-6">
                 <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-3 flex items-center gap-2">
-                    Subject
-                    <HelpCircle size={14} className="text-slate-400" />
-                  </label>
-                  <div className="grid grid-cols-1 gap-2">
-                    {SUBJECTS.map((sub) => (
-                      <button
-                        key={sub}
-                        onClick={() => handleSubjectChange(sub)}
-                        className={cn(
-                          "flex items-center justify-between p-3 rounded-xl border text-sm transition-all text-left",
-                          selectedSubject === sub 
-                            ? "bg-indigo-600 border-indigo-600 text-white shadow-md shadow-indigo-100" 
-                            : "bg-white border-slate-200 text-slate-600 hover:border-indigo-300"
-                        )}
-                      >
-                        {sub}
-                        {selectedSubject === sub && <ChevronRight size={16} />}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-3">Topic</label>
-                  <select
-                    value={selectedTopic}
-                    onChange={(e) => setSelectedTopic(e.target.value)}
-                    className="w-full p-3 rounded-xl border border-slate-200 bg-slate-50 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition-all"
-                  >
-                    {TOPICS[selectedSubject].map(topic => (
-                      <option key={topic} value={topic}>{topic}</option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold text-slate-700 mb-3">Grade Level</label>
-                  <div className="flex flex-wrap gap-2">
-                    {['Grade 1', 'Grade 2', 'Grade 3', 'Grade 4', 'Grade 5'].map((g) => (
+                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Grade</label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {['G1', 'G2', 'G3', 'G4', 'G5'].map((g) => (
                       <button
                         key={g}
-                        onClick={() => setGrade(g)}
+                        onClick={() => setGrade(`Grade ${g.slice(1)}`)}
                         className={cn(
-                          "px-4 py-2 rounded-full text-xs font-bold transition-all",
-                          grade === g 
-                            ? "bg-slate-900 text-white" 
-                            : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                          "py-2 rounded-xl text-xs font-bold transition-all border",
+                          grade === `Grade ${g.slice(1)}`
+                            ? "bg-slate-900 border-slate-900 text-white" 
+                            : "bg-white border-slate-200 text-slate-600 hover:border-indigo-300"
                         )}
                       >
                         {g}
@@ -220,58 +229,99 @@ export default function App() {
                   </div>
                 </div>
 
-                <button
-                  onClick={handleGenerate}
-                  disabled={isGenerating}
-                  className="w-full py-4 bg-indigo-600 text-white rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-indigo-700 transition-all disabled:opacity-50 shadow-lg shadow-indigo-200"
-                >
-                  {isGenerating ? (
-                    <>
-                      <RefreshCw className="animate-spin" size={20} />
-                      {mode === 'ai' ? 'Generating...' : 'Loading...'}
-                    </>
-                  ) : (
-                    <>
-                      {mode === 'ai' ? <Sparkles size={20} /> : <Library size={20} />}
-                      {mode === 'ai' ? 'Generate with AI' : 'Load from Library'}
-                    </>
-                  )}
-                </button>
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Difficulty</label>
+                  <div className="space-y-2">
+                    {[
+                      { id: 'Easy', icon: Smile, color: 'text-emerald-500', bg: 'bg-emerald-50' },
+                      { id: 'Medium', icon: ZapIcon, color: 'text-amber-500', bg: 'bg-amber-50' },
+                      { id: 'Hard', icon: TrophyIcon, color: 'text-rose-500', bg: 'bg-rose-50' }
+                    ].map((d) => (
+                      <button
+                        key={d.id}
+                        onClick={() => setDifficulty(d.id as Difficulty)}
+                        className={cn(
+                          "w-full flex items-center gap-3 p-3 rounded-xl border text-sm transition-all",
+                          difficulty === d.id 
+                            ? "bg-indigo-600 border-indigo-600 text-white shadow-md" 
+                            : "bg-white border-slate-200 text-slate-600 hover:border-indigo-300"
+                        )}
+                      >
+                        <d.icon size={16} className={difficulty === d.id ? "text-white" : d.color} />
+                        <span className="font-medium">{d.id}</span>
+                        <span className={cn("ml-auto text-[10px] px-1.5 py-0.5 rounded-md", difficulty === d.id ? "bg-white/20" : d.bg, difficulty === d.id ? "text-white" : d.color)}>
+                          {getQuestionCount(d.id as Difficulty)} Qs
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">Subject</label>
+                  <div className="space-y-2">
+                    {SUBJECTS.map((sub) => (
+                      <button
+                        key={sub}
+                        onClick={() => handleSubjectChange(sub)}
+                        className={cn(
+                          "w-full flex items-center justify-between p-3 rounded-xl border text-sm transition-all text-left",
+                          selectedSubject === sub 
+                            ? "bg-indigo-600 border-indigo-600 text-white shadow-md" 
+                            : "bg-white border-slate-200 text-slate-600 hover:border-indigo-300"
+                        )}
+                      >
+                        {sub}
+                        {selectedSubject === sub && <ChevronRight size={14} />}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </div>
             </section>
-
-            <div className="bg-indigo-900 text-white p-8 rounded-3xl relative overflow-hidden">
-              <div className="relative z-10">
-                <h3 className="text-xl font-bold mb-2 flex items-center gap-2">
-                  <Info size={20} />
-                  Free Forever
-                </h3>
-                <p className="text-indigo-100 text-sm leading-relaxed">
-                  Our mission is to provide free educational tools for everyone. Use the AI generator for infinite variety or the Library for verified questions.
-                </p>
-              </div>
-              <BrainCircuit className="absolute -right-4 -bottom-4 text-indigo-800 w-32 h-32" />
-            </div>
           </div>
 
-          {/* Preview Area */}
-          <div className="lg:col-span-8">
+          {/* Main Content Area */}
+          <div className="lg:col-span-9">
             <AnimatePresence mode="wait">
               {!workbook && !isGenerating && (
                 <motion.div
-                  key="empty"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="h-full min-h-[500px] flex flex-col items-center justify-center bg-slate-50 rounded-3xl border-2 border-dashed border-slate-200 p-12 text-center"
+                  key="topics"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -20 }}
+                  className="space-y-6"
                 >
-                  <div className="w-20 h-20 bg-white rounded-2xl flex items-center justify-center shadow-sm mb-6">
-                    <BookOpen className="text-slate-300" size={40} />
+                  <div className="flex items-center justify-between">
+                    <h2 className="text-2xl font-bold text-slate-800">
+                      Select a Topic in <span className="text-indigo-600">{selectedSubject}</span>
+                    </h2>
                   </div>
-                  <h3 className="text-xl font-bold text-slate-800 mb-2">Ready to Start?</h3>
-                  <p className="text-slate-500 max-w-xs">
-                    Select your subject and topic on the left. You can use our AI to create new questions or pick from our library.
-                  </p>
+                  
+                  <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-4">
+                    {currentTopics.map((topic) => {
+                      const Icon = ICON_MAP[topic.icon] || BookOpen;
+                      return (
+                        <button
+                          key={topic.name}
+                          onClick={() => handleGenerate(topic.name)}
+                          className="group relative bg-white p-6 rounded-3xl border border-slate-100 shadow-sm hover:shadow-xl hover:shadow-indigo-100 hover:-translate-y-1 transition-all text-left overflow-hidden"
+                        >
+                          <div className="absolute top-0 right-0 w-24 h-24 bg-indigo-50 rounded-bl-full -mr-8 -mt-8 group-hover:bg-indigo-100 transition-colors"></div>
+                          <div className="relative z-10">
+                            <div className="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-indigo-600 group-hover:text-white transition-all">
+                              <Icon size={24} />
+                            </div>
+                            <h3 className="font-bold text-slate-800 mb-2 group-hover:text-indigo-600 transition-colors">{topic.name}</h3>
+                            <p className="text-sm text-slate-500 leading-relaxed">{topic.description}</p>
+                          </div>
+                          <div className="mt-6 flex items-center text-xs font-bold text-indigo-600 opacity-0 group-hover:opacity-100 transition-all">
+                            Generate Worksheet <ChevronRight size={14} className="ml-1" />
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
                 </motion.div>
               )}
 
@@ -294,7 +344,7 @@ export default function App() {
                   <h3 className="text-2xl font-bold text-slate-800 mb-2">
                     {mode === 'ai' ? 'AI is Thinking...' : 'Fetching Library Content...'}
                   </h3>
-                  <p className="text-slate-500">Preparing your {grade} {selectedSubject} worksheet.</p>
+                  <p className="text-slate-500">Preparing your {difficulty} level {grade} {selectedSubject} worksheet.</p>
                 </motion.div>
               )}
 
@@ -306,16 +356,33 @@ export default function App() {
                   className="space-y-6"
                 >
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
-                    <div>
-                      <h2 className="text-2xl font-bold text-slate-900">{workbook.title}</h2>
-                      <div className="flex items-center gap-3 mt-1 text-sm text-slate-500">
-                        <span className="flex items-center gap-1"><FileText size={14} /> {workbook.questions.length} Questions</span>
-                        <span className="w-1 h-1 bg-slate-300 rounded-full"></span>
-                        <span>{workbook.grade}</span>
-                        <span className="w-1 h-1 bg-slate-300 rounded-full"></span>
-                        <span className="bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded text-[10px] font-bold uppercase">
-                          {mode === 'ai' ? 'AI Generated' : 'Library Content'}
-                        </span>
+                    <div className="flex items-start gap-4">
+                      <button 
+                        onClick={() => { setWorkbook(null); setSelectedTopic(null); }}
+                        className="mt-1 p-2 hover:bg-slate-100 rounded-xl transition-all text-slate-400 hover:text-slate-600"
+                      >
+                        <ArrowLeft size={20} />
+                      </button>
+                      <div>
+                        <h2 className="text-2xl font-bold text-slate-900">{workbook.title}</h2>
+                        <div className="flex flex-wrap items-center gap-3 mt-1 text-sm text-slate-500">
+                          <span className="flex items-center gap-1"><FileText size={14} /> {workbook.questions.length} Questions</span>
+                          <span className="w-1 h-1 bg-slate-300 rounded-full"></span>
+                          <span>{workbook.grade}</span>
+                          <span className="w-1 h-1 bg-slate-300 rounded-full"></span>
+                          <span className={cn(
+                            "px-2 py-0.5 rounded text-[10px] font-bold uppercase",
+                            workbook.difficulty === 'Easy' ? "bg-emerald-50 text-emerald-600" :
+                            workbook.difficulty === 'Medium' ? "bg-amber-50 text-amber-600" :
+                            "bg-rose-50 text-rose-600"
+                          )}>
+                            {workbook.difficulty}
+                          </span>
+                          <span className="w-1 h-1 bg-slate-300 rounded-full"></span>
+                          <span className="bg-indigo-50 text-indigo-600 px-2 py-0.5 rounded text-[10px] font-bold uppercase">
+                            {mode === 'ai' ? 'AI Generated' : 'Library Content'}
+                          </span>
+                        </div>
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
