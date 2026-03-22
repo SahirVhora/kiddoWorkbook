@@ -1,7 +1,18 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { Question, Subject, Difficulty } from "../types";
 
-const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' });
+let aiInstance: GoogleGenAI | null = null;
+
+function getAI() {
+  if (!aiInstance) {
+    const apiKey = process.env.GEMINI_API_KEY || '';
+    if (!apiKey) {
+      throw new Error("GEMINI_API_KEY is missing. Please check your environment variables.");
+    }
+    aiInstance = new GoogleGenAI({ apiKey });
+  }
+  return aiInstance;
+}
 
 export async function generateWorkbookQuestions(
   subject: Subject, 
@@ -10,6 +21,7 @@ export async function generateWorkbookQuestions(
   difficulty: Difficulty,
   count: number
 ): Promise<Question[]> {
+  const ai = getAI();
   const prompt = `You are an expert UK primary school teacher. Generate a set of ${count} educational questions for a primary school workbook.
     Year Group: ${grade} (UK National Curriculum)
     Subject: ${subject}

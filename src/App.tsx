@@ -162,13 +162,12 @@ export default function App() {
       if (mode === 'ai') {
         questions = await generateWorkbookQuestions(selectedSubject, topicName, yearGroup, difficulty, count);
       } else {
-        // Library mode
+        // Library mode - strictly no AI calls
         const libraryQuestions = STATIC_QUESTION_BANK[selectedSubject]?.[topicName] || [];
         if (libraryQuestions.length === 0) {
-          questions = await generateWorkbookQuestions(selectedSubject, topicName, yearGroup, difficulty, count);
-        } else {
-          questions = libraryQuestions.slice(0, count);
+          throw new Error(`The topic "${topicName}" is not yet available in the Free Library. Please switch to AI Mode to generate it, or choose a different topic.`);
         }
+        questions = libraryQuestions.slice(0, count);
       }
 
       if (!questions || questions.length === 0) {
