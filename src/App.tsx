@@ -101,6 +101,7 @@ export default function App() {
   const [yearGroup, setYearGroup] = useState<YearGroup>(YEARS[2]); // Default to Year 3
   const [difficulty, setDifficulty] = useState<Difficulty>('Medium');
   const [isGenerating, setIsGenerating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [workbook, setWorkbook] = useState<Workbook | null>(null);
   const [showAnswers, setShowAnswers] = useState(false);
   const [mode, setMode] = useState<'ai' | 'library'>('ai');
@@ -126,6 +127,8 @@ export default function App() {
     setSelectedSubject(subject);
     setSelectedTopic(null);
     setWorkbook(null);
+    setError(null);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const getQuestionCount = (diff: Difficulty) => {
@@ -141,12 +144,17 @@ export default function App() {
     setSelectedTopic(topicName);
     setIsGenerating(true);
     setWorkbook(null);
+    setError(null);
     setQuizState({
       isActive: false,
       currentQuestionIndex: 0,
       userAnswers: {},
       results: null
     });
+    
+    // Scroll to top to show loader/content clearly on mobile
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+
     try {
       let questions: Question[] = [];
       const count = getQuestionCount(difficulty);
@@ -163,6 +171,10 @@ export default function App() {
         }
       }
 
+      if (!questions || questions.length === 0) {
+        throw new Error("No questions were generated. Please try again.");
+      }
+
       setWorkbook({
         title: `${topicName} Mastery Workbook`,
         subject: selectedSubject,
@@ -171,8 +183,9 @@ export default function App() {
         difficulty: difficulty,
         questions
       });
-    } catch (error) {
-      console.error(error);
+    } catch (err) {
+      console.error(err);
+      setError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
     } finally {
       setIsGenerating(false);
     }
@@ -282,7 +295,7 @@ export default function App() {
         <div className="grid lg:grid-cols-12 gap-8">
           {/* Sidebar Settings */}
           {!quizState.isActive && (
-            <div className="lg:col-span-3 space-y-6">
+            <div className={cn("lg:col-span-3 space-y-6", workbook && "hidden lg:block")}>
               <section className="bg-white p-6 rounded-3xl border border-slate-100 shadow-xl shadow-slate-200/50">
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="text-lg font-bold flex items-center gap-2">
@@ -380,9 +393,30 @@ export default function App() {
           )}
 
           {/* Main Content Area */}
-          <div className={cn(quizState.isActive ? "lg:col-span-12" : "lg:col-span-9")}>
+          <div className={cn(quizState.isActive ? "lg:col-span-12" : (workbook ? "lg:col-span-12 max-w-4xl mx-auto w-full" : "lg:col-span-9"))}>
             <AnimatePresence mode="wait">
-              {!workbook && !isGenerating && (
+              {error && !isGenerating && (
+                <motion.div
+                  key="error"
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="bg-rose-50 border border-rose-100 p-8 rounded-3xl text-center"
+                >
+                  <div className="w-16 h-16 bg-rose-100 text-rose-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <X size={32} />
+                  </div>
+                  <h3 className="text-xl font-bold text-rose-900 mb-2">Oops!</h3>
+                  <p className="text-rose-700 mb-6">{error}</p>
+                  <button 
+                    onClick={() => setError(null)}
+                    className="px-6 py-2 bg-rose-600 text-white rounded-xl font-bold hover:bg-rose-700 transition-all"
+                  >
+                    Try Again
+                  </button>
+                </motion.div>
+              )}
+
+              {!workbook && !isGenerating && !error && (
                 <motion.div
                   key="topics"
                   initial={{ opacity: 0, y: 20 }}
