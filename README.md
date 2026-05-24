@@ -1,20 +1,28 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
+# KiddoWorkbooks
 
-# Run and deploy your AI Studio app
+A professional workbook generator for primary school kids, aligned with the **UK National Curriculum (Year 1–6)**. Generate custom worksheets with downloadable PDFs and AI-powered question creation.
 
-This contains everything you need to run your app locally.
+## Features
 
-View your app in AI Studio: https://ai.studio/apps/15ea66e2-27b3-47a1-8fc6-7d81e78032ae
+- **UK National Curriculum aligned** — Covers Mathematics and English for Years 1–6
+- **AI-powered question generation** — Uses Google Gemini to create fresh, curriculum-relevant questions on demand
+- **Static question bank** — Ready-to-use questions covering Number Bonds, Place Value, Fractions, Money, Time, and more
+- **PDF worksheet downloads** — Generate and download printable worksheets via jsPDF
+- **Year-level filtering** — Select the appropriate difficulty by school year
 
-## Run Locally
+## Tech Stack
 
-**Prerequisites:**  Node.js
+- **Frontend:** React 19, TypeScript, Vite, Tailwind CSS
+- **AI:** Google Gemini SDK (`@google/genai`)
+- **PDF Generation:** jsPDF with auto-table plugin
+- **Animations:** Motion (Framer Motion)
 
+## Getting Started
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+**Prerequisites:** Node.js and a Gemini API key.
+
+```bash
+npm install
+cp .env.example .env.local    # Add your GEMINI_API_KEY
+npm run dev                    # → http://localhost:3000
+```
