@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://sahirvhora.github.io/kiddoWorkbook/sitemap.xml
