@@ -1,1 +1,9 @@
 @import "tailwindcss";
+
+/* Print styles for generated worksheets */
+@media print {
+  nav, footer, .no-print { display: none !important; }
+  body { background: white; color: black; }
+  .print-break-inside-avoid { break-inside: avoid; }
+  .print-page-break { break-after: page; }
+}
