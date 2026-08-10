@@ -1,28 +1,44 @@
-# KiddoWorkbooks
+# School Quest
 
-A professional workbook generator for primary school kids, aligned with the **UK National Curriculum (Year 1-6)**. Generate custom worksheets with downloadable PDFs and AI-powered question creation.
+A private, advert-free Year 5 learning space for short lessons, five-question mini quests, smart retry practice and printable topic packs.
 
-## Features
+## What is covered
 
-- **UK National Curriculum aligned** - Covers Mathematics and English for Years 1-6
-- **AI-powered question generation** - Uses Google Gemini to create fresh, curriculum-relevant questions on demand
-- **Static question bank** - Ready-to-use questions covering Number Bonds, Place Value, Fractions, Money, Time, and more
-- **PDF worksheet downloads** - Generate and download printable worksheets via jsPDF
-- **Year-level filtering** - Select the appropriate difficulty by school year
+- Mathematics: the Year 5 programme of study, including number, calculation, fractions and decimals, measurement, geometry and statistics
+- English: the upper Key Stage 2 programme, including reading, writing, spelling, vocabulary, grammar and punctuation
+- Science: Year 5 content plus working scientifically
+- History and geography: common Key Stage 2 themes and skills; schools may organise these topics in different year groups
+- 56 topic-specific lessons and 336 source-backed Year 5 practice questions with explanations
 
-## Tech Stack
+Curriculum alignment is based on the official GOV.UK programmes of study. Questions and lesson wording are original rather than copied from those publications.
 
-- **Frontend:** React 19, TypeScript, Vite, Tailwind CSS
-- **AI:** Google Gemini SDK (`@google/genai`)
-- **PDF Generation:** jsPDF with auto-table plugin
-- **Animations:** Motion (Framer Motion)
+## Learning loop
 
-## Getting Started
+1. Pick a subject and learn the topic's three big ideas.
+2. Complete a varied five-question mini quest.
+3. Get immediate, encouraging explanations.
+4. Revisit missed questions through smart review.
+5. Print the full topic pack when paper practice is more useful.
 
-**Prerequisites:** Node.js and a Gemini API key.
+Progress is stored only in the browser. No account, child profile, adverts or social features are used.
+
+## Run locally
 
 ```bash
 npm install
-cp .env.example .env.local    # Add your GEMINI_API_KEY
-npm run dev                    # → http://localhost:3000
+npm run dev
 ```
+
+No API key is required for the built-in learning experience.
+
+## Verify a change
+
+```bash
+npm run check
+```
+
+This runs TypeScript checks, curriculum-content validation and a production build. The content validator guards topic coverage, question depth, unique IDs, answer options, explanations, sources and topic-specific lessons.
+
+## Stack
+
+React 19, TypeScript, Vite, Motion, jsPDF and Lucide icons.
