@@ -1,0 +1,78 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
+  <title id="title">School Quest Year 5 learning adventures</title>
+  <desc id="desc">A colourful preview card showing five Year 5 subjects, short lessons, mini quests and printable worksheets.</desc>
+  <defs>
+    <linearGradient id="background" x1="80" y1="30" x2="1120" y2="600" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#f5f1ff"/>
+      <stop offset="0.52" stop-color="#fffdf8"/>
+      <stop offset="1" stop-color="#e9faf4"/>
+    </linearGradient>
+    <linearGradient id="brand" x1="0" y1="0" x2="1" y2="1">
+      <stop stop-color="#8069ed"/>
+      <stop offset="1" stop-color="#6545d9"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="160%">
+      <feDropShadow dx="0" dy="12" stdDeviation="14" flood-color="#4a347f" flood-opacity="0.14"/>
+    </filter>
+  </defs>
+
+  <rect width="1200" height="630" rx="36" fill="url(#background)"/>
+  <circle cx="1090" cy="76" r="150" fill="#dcd4ff" opacity="0.55"/>
+  <circle cx="95" cy="572" r="150" fill="#c4f0e2" opacity="0.55"/>
+  <path d="M0 516c147-77 277-58 397 1 132 65 257 65 383 3 144-71 284-69 420 5v105H0z" fill="#fff" opacity="0.72"/>
+
+  <g transform="translate(72 64)">
+    <rect width="74" height="74" rx="22" fill="url(#brand)"/>
+    <path d="m15 27 22-11 22 11-22 11z" fill="#fff"/>
+    <path d="M22 34v15c0 5.6 6.7 10 15 10s15-4.4 15-10V34l-15 7.5z" fill="#fff3a6"/>
+    <path d="M59 29v20" stroke="#fff" stroke-width="4" stroke-linecap="round"/>
+    <circle cx="59" cy="53" r="3.5" fill="#ef7062"/>
+  </g>
+
+  <text x="170" y="112" fill="#2c2350" font-family="Inter, ui-rounded, system-ui, sans-serif" font-size="48" font-weight="800" letter-spacing="-1.5">School Quest</text>
+  <text x="76" y="212" fill="#2c2350" font-family="Inter, ui-rounded, system-ui, sans-serif" font-size="68" font-weight="850" letter-spacing="-2.2">Year 5 learning,</text>
+  <text x="76" y="286" fill="#7257e8" font-family="Inter, ui-rounded, system-ui, sans-serif" font-size="68" font-weight="850" letter-spacing="-2.2">made adventurous.</text>
+  <text x="80" y="344" fill="#625a73" font-family="Inter, system-ui, sans-serif" font-size="25">56 short lessons · 336 practice questions · printable topic packs</text>
+
+  <g font-family="Inter, system-ui, sans-serif" font-size="19" font-weight="700" filter="url(#shadow)">
+    <g transform="translate(80 392)">
+      <rect width="186" height="74" rx="22" fill="#f0edff" stroke="#dcd4ff" stroke-width="2"/>
+      <circle cx="38" cy="37" r="20" fill="#7257e8"/>
+      <text x="38" y="44" fill="#fff" text-anchor="middle">123</text>
+      <text x="72" y="44" fill="#3b315f">Maths</text>
+    </g>
+    <g transform="translate(282 392)">
+      <rect width="186" height="74" rx="22" fill="#fff0ed" stroke="#ffd9d3" stroke-width="2"/>
+      <circle cx="38" cy="37" r="20" fill="#ef7062"/>
+      <text x="38" y="44" fill="#fff" text-anchor="middle">Aa</text>
+      <text x="72" y="44" fill="#63342f">English</text>
+    </g>
+    <g transform="translate(484 392)">
+      <rect width="186" height="74" rx="22" fill="#e8faf4" stroke="#c4f0e2" stroke-width="2"/>
+      <circle cx="38" cy="37" r="20" fill="#159f83"/>
+      <path d="M32 25h12M36 25v10l-7 11h18l-7-11V25" fill="none" stroke="#fff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <text x="72" y="44" fill="#21584d">Science</text>
+    </g>
+    <g transform="translate(686 392)">
+      <rect width="186" height="74" rx="22" fill="#fff6e6" stroke="#f7dfb6" stroke-width="2"/>
+      <circle cx="38" cy="37" r="20" fill="#d08b35"/>
+      <path d="M27 31h22M30 43h16M32 31v12M38 31v12M44 31v12" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/>
+      <text x="72" y="44" fill="#66481f">History</text>
+    </g>
+    <g transform="translate(888 392)">
+      <rect width="214" height="74" rx="22" fill="#e9f5ff" stroke="#c8e5f8" stroke-width="2"/>
+      <circle cx="38" cy="37" r="20" fill="#3389c8"/>
+      <circle cx="38" cy="37" r="12" fill="none" stroke="#fff" stroke-width="2.2"/>
+      <path d="M26 37h24M38 25c4 4 6 8 6 12s-2 8-6 12M38 25c-4 4-6 8-6 12s2 8 6 12" fill="none" stroke="#fff" stroke-width="1.8"/>
+      <text x="72" y="44" fill="#284e69">Geography</text>
+    </g>
+  </g>
+
+  <g transform="translate(80 515)" font-family="Inter, system-ui, sans-serif">
+    <rect width="456" height="62" rx="31" fill="#fff" stroke="#e5def7" stroke-width="2"/>
+    <circle cx="34" cy="31" r="18" fill="#fff3a6"/>
+    <path d="m26 31 5 5 11-12" fill="none" stroke="#7257e8" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="65" y="38" fill="#443a59" font-size="20" font-weight="700">Free · private progress · no adverts</text>
+  </g>
+  <text x="1100" y="555" fill="#625a73" text-anchor="end" font-family="Inter, system-ui, sans-serif" font-size="19" font-weight="650">UK curriculum-aligned</text>
+</svg>

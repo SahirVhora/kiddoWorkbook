@@ -1,0 +1,19 @@
+{
+  "name": "School Quest — Year 5 Learning",
+  "short_name": "School Quest",
+  "description": "Free UK Year 5 lessons, quizzes and printable worksheets across five subjects.",
+  "lang": "en-GB",
+  "start_url": ".",
+  "scope": ".",
+  "display": "standalone",
+  "background_color": "#fffdf8",
+  "theme_color": "#7257e8",
+  "icons": [
+    {
+      "src": "favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

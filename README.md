@@ -1,6 +1,9 @@
 # School Quest
 
-A private, advert-free Year 5 learning space for short lessons, five-question mini quests, smart retry practice and printable topic packs.
+A free, privacy-friendly and advert-free Year 5 learning space for short lessons, five-question mini quests, smart retry practice and printable topic packs.
+
+- Primary site: [kiddo-workbook.vercel.app](https://kiddo-workbook.vercel.app)
+- GitHub Pages mirror: [sahirvhora.github.io/kiddoWorkbook](https://sahirvhora.github.io/kiddoWorkbook/)
 
 ## What is covered
 
@@ -38,6 +41,8 @@ npm run check
 ```
 
 This runs TypeScript checks, curriculum-content validation and a production build. The content validator guards topic coverage, question depth, unique IDs, answer options, explanations, sources and topic-specific lessons.
+
+The same command also validates canonical metadata, structured data, robots.txt, the sitemap, social-preview assets and the web manifest. Pushes to `main` deploy automatically to Vercel and GitHub Pages.
 
 ## Stack
 
