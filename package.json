@@ -6,11 +6,13 @@
   "scripts": {
     "dev": "vite --port=3000 --host=0.0.0.0",
     "build": "vite build",
+    "build:pages": "vite build --base=/kiddoWorkbook/",
     "preview": "vite preview",
     "clean": "rm -rf dist",
     "lint": "tsc --noEmit",
     "validate-content": "node --import tsx scripts/validate-content.ts",
-    "check": "npm run lint && npm run validate-content && npm run build"
+    "validate-seo": "node scripts/validate-seo.mjs",
+    "check": "npm run lint && npm run validate-content && npm run validate-seo && npm run build"
   },
   "dependencies": {
     "@google/genai": "^1.29.0",
