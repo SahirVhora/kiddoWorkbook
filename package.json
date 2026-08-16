@@ -11,8 +11,9 @@
     "clean": "rm -rf dist",
     "lint": "tsc --noEmit",
     "validate-content": "node --import tsx scripts/validate-content.ts",
+    "validate-options": "node --import tsx scripts/validate-option-shuffle.ts",
     "validate-seo": "node scripts/validate-seo.mjs",
-    "check": "npm run lint && npm run validate-content && npm run validate-seo && npm run build"
+    "check": "npm run lint && npm run validate-content && npm run validate-options && npm run validate-seo && npm run build"
   },
   "dependencies": {
     "@google/genai": "^1.29.0",
