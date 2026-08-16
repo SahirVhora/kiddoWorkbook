@@ -54,6 +54,7 @@ import { getYear5Questions } from "./data/questionBank";
 import { YEAR_5_LESSONS } from "./data/year5Lessons";
 import { YEAR_5_SOURCES } from "./data/year5QuestionExpansion";
 import { downloadWorksheetPDF } from "./services/pdfService";
+import { shuffleQuestionOptions } from "./utils/shuffleQuestionOptions";
 import {
   SUBJECTS,
   TOPICS_BY_YEAR,
@@ -602,13 +603,16 @@ function App() {
 
   const startQuest = () => {
     if (!originalQuestions.length) return;
-    const nextQuestions = isReview
+    const selectedQuestions = isReview
       ? questions
       : [...originalQuestions]
           .map((question) => ({ question, order: Math.random() }))
           .sort((a, b) => a.order - b.order)
           .slice(0, MINI_QUEST_SIZE)
           .map(({ question }) => question);
+    const nextQuestions = selectedQuestions.map((question) =>
+      shuffleQuestionOptions(question),
+    );
     setActiveQuestions(nextQuestions);
     setQuizIndex(0);
     setAnswers({});
