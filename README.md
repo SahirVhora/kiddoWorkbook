@@ -1,6 +1,6 @@
 # School Quest
 
-A free, privacy-friendly and advert-free Year 5 learning space for short lessons, five-question mini quests, smart retry practice and printable topic packs.
+A free, privacy-friendly and advert-free Year 5 learning space for short lessons, quick quests, full challenges, smart retry practice and printable topic packs.
 
 - Primary site: [kiddo-workbook.vercel.app](https://kiddo-workbook.vercel.app)
 - GitHub Pages mirror: [sahirvhora.github.io/kiddoWorkbook](https://sahirvhora.github.io/kiddoWorkbook/)
@@ -11,14 +11,15 @@ A free, privacy-friendly and advert-free Year 5 learning space for short lessons
 - English: the upper Key Stage 2 programme, including reading, writing, spelling, vocabulary, grammar and punctuation
 - Science: Year 5 content plus working scientifically
 - History and geography: common Key Stage 2 themes and skills; schools may organise these topics in different year groups
-- 56 topic-specific lessons and 336 source-backed Year 5 practice questions with explanations
+- 56 topic-specific lessons and 560 source-backed Year 5 practice questions with explanations
+- 10 original questions for every topic, available as a five-question quick quest or a ten-question full challenge
 
 Curriculum alignment is based on the official GOV.UK programmes of study. Questions and lesson wording are original rather than copied from those publications.
 
 ## Learning loop
 
 1. Pick a subject and learn the topic's three big ideas.
-2. Complete a varied five-question mini quest.
+2. Choose a five-question quick quest or a ten-question full challenge.
 3. Get immediate, encouraging explanations.
 4. Revisit missed questions through smart review.
 5. Print the full topic pack when paper practice is more useful.

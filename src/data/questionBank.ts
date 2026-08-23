@@ -1,5 +1,6 @@
 import type { Question, Subject } from "../types";
 import { YEAR_5_CORE_EXPANSION } from "./year5CoreExpansion";
+import { YEAR_5_MORE_QUESTIONS } from "./year5MoreQuestions";
 import { YEAR_5_QUESTION_EXPANSION } from "./year5QuestionExpansion";
 
 export const BASE_QUESTION_BANK: Record<Subject, Record<string, Question[]>> = {
@@ -2189,6 +2190,7 @@ export const STATIC_QUESTION_BANK: Record<
         ...new Set([
           ...Object.keys(topics),
           ...Object.keys(YEAR_5_CORE_EXPANSION[subject] ?? {}),
+          ...Object.keys(YEAR_5_MORE_QUESTIONS[subject] ?? {}),
           ...Object.keys(YEAR_5_QUESTION_EXPANSION[subject] ?? {}),
         ]),
       ].map((topic) => [
@@ -2196,6 +2198,7 @@ export const STATIC_QUESTION_BANK: Record<
         [
           ...(topics[topic] ?? []),
           ...(YEAR_5_CORE_EXPANSION[subject]?.[topic] ?? []),
+          ...(YEAR_5_MORE_QUESTIONS[subject]?.[topic] ?? []),
           ...(YEAR_5_QUESTION_EXPANSION[subject]?.[topic] ?? []),
         ],
       ]),

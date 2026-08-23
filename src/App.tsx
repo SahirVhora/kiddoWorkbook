@@ -66,8 +66,9 @@ import {
 
 const YEAR = "Year 5" as const;
 const STORAGE_KEY = "school-quest-progress-v1";
-const CONTENT_VERSION = "year5-curriculum-map-v3";
-const MINI_QUEST_SIZE = 5;
+const CONTENT_VERSION = "year5-curriculum-map-v4";
+const QUICK_QUEST_SIZE = 5;
+const FULL_QUEST_SIZE = 10;
 const SUBJECT_ICONS: Record<Subject, LucideIcon> = {
   Mathematics: Brain,
   English: BookOpen,
@@ -491,10 +492,7 @@ function App() {
     TOPICS_BY_YEAR[YEAR][subject].map((topic) => {
       const item = progress[`${subject}:${topic.name}`];
       const validMissedIds = getValidMissedQuestionIds(subject, topic, item);
-      const questionCount = getYear5Questions(subject, topic.name).length;
-      const accuracy = questionCount
-        ? (item?.lastScore ?? 0) / questionCount
-        : 1;
+      const accuracy = item?.bestTotal ? (item.best ?? 0) / item.bestTotal : 1;
       return { subject, topic, item, validMissedIds, accuracy };
     }),
   )
@@ -601,14 +599,14 @@ function App() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  const startQuest = () => {
+  const startQuest = (requestedSize = QUICK_QUEST_SIZE) => {
     if (!originalQuestions.length) return;
     const selectedQuestions = isReview
       ? questions
       : [...originalQuestions]
           .map((question) => ({ question, order: Math.random() }))
           .sort((a, b) => a.order - b.order)
-          .slice(0, MINI_QUEST_SIZE)
+          .slice(0, Math.min(requestedSize, originalQuestions.length))
           .map(({ question }) => question);
     const nextQuestions = selectedQuestions.map((question) =>
       shuffleQuestionOptions(question),
@@ -679,6 +677,13 @@ function App() {
       ]),
     ];
     const now = new Date().toISOString();
+    const previousBest = previousItem?.best ?? 0;
+    const previousBestTotal = previousItem?.bestTotal ?? QUICK_QUEST_SIZE;
+    const previousBestRatio = previousBest / Math.max(previousBestTotal, 1);
+    const currentRatio = finalScore / Math.max(questions.length, 1);
+    const isNewBest =
+      currentRatio > previousBestRatio ||
+      (currentRatio === previousBestRatio && finalScore > previousBest);
 
     setProgress((previous) => ({
       ...previous,
@@ -698,8 +703,8 @@ function App() {
           }
         : {
             ...previousItem,
-            best: Math.max(previousItem?.best ?? 0, finalScore),
-            bestTotal: questions.length,
+            best: isNewBest ? finalScore : previousBest,
+            bestTotal: isNewBest ? questions.length : previousBestTotal,
             attempts: (previousItem?.attempts ?? 0) + 1,
             completed: true,
             lastScore: finalScore,
@@ -1076,9 +1081,9 @@ function App() {
                 <div>
                   <strong>{CURRICULUM_NOTES[selectedSubject]}</strong>
                   <span>
-                    {topics.length} carefully mapped topics · mini quests choose{" "}
-                    {MINI_QUEST_SIZE} questions, while print packs include the
-                    full set
+                    {topics.length} carefully mapped topics · choose a{" "}
+                    {QUICK_QUEST_SIZE}-question quick quest or a{" "}
+                    {FULL_QUEST_SIZE}-question full challenge
                   </span>
                 </div>
               </div>
@@ -1190,11 +1195,13 @@ function App() {
             subject={selectedSubject}
             topic={selectedTopic}
             lesson={lesson}
-            questions={questions}
+            questions={isReview ? questions : originalQuestions}
+            isReview={isReview}
             source={lessonSource}
             progress={topicProgress}
             onBack={() => setScreen("home")}
-            onStart={startQuest}
+            onStartQuick={() => startQuest(QUICK_QUEST_SIZE)}
+            onStartFull={() => startQuest(FULL_QUEST_SIZE)}
             onDownload={downloadPack}
           />
         )}
@@ -1209,6 +1216,7 @@ function App() {
             selectedAnswer={answers[currentQuestion.id]}
             revealed={answerRevealed}
             score={score}
+            isReview={isReview}
             onBack={() => setScreen("lesson")}
             onAnswer={selectAnswer}
             onDraft={draftAnswer}
@@ -1222,19 +1230,10 @@ function App() {
             topic={selectedTopic}
             score={score}
             total={questions.length}
-            best={
-              isReview
-                ? (progress[progressKey]?.best ?? 0)
-                : Math.max(progress[progressKey]?.best ?? 0, score)
-            }
-            bestTotal={
-              isReview
-                ? (progress[progressKey]?.bestTotal ??
-                  Math.min(MINI_QUEST_SIZE, originalQuestions.length))
-                : questions.length
-            }
+            best={progress[progressKey]?.best ?? score}
+            bestTotal={progress[progressKey]?.bestTotal ?? questions.length}
             isReview={isReview}
-            onAgain={startQuest}
+            onAgain={() => startQuest(questions.length)}
             onHome={() => setScreen("home")}
             onReview={() => setScreen("lesson")}
           />
@@ -1313,8 +1312,9 @@ function App() {
                 </span>
               </div>
               <p className="parent-curriculum-note">
-                Mini quests use five varied questions for a manageable session.
-                Printable packs contain every question for the chosen topic.
+                Quick quests use five varied questions for a manageable session.
+                Full challenges and printable packs use all ten questions for
+                the chosen topic.
               </p>
               <div className="modal-actions">
                 <button className="secondary-button" onClick={resetProgress}>
@@ -1344,20 +1344,24 @@ function LessonView({
   topic,
   lesson,
   questions,
+  isReview,
   source,
   progress,
   onBack,
-  onStart,
+  onStartQuick,
+  onStartFull,
   onDownload,
 }: {
   subject: Subject;
   topic: Topic;
   lesson: { hook: string; learn: string[]; remember: string; tryIt: string };
   questions: Question[];
+  isReview: boolean;
   source: { title: string; url: string };
   progress?: ProgressItem;
   onBack: () => void;
-  onStart: () => void;
+  onStartQuick: () => void;
+  onStartFull: () => void;
   onDownload: () => void;
 }) {
   const Icon = SUBJECT_ICONS[subject];
@@ -1452,14 +1456,30 @@ function LessonView({
           <div className="lesson-actions">
             <button
               className="primary-button wide"
-              onClick={onStart}
+              onClick={onStartQuick}
               disabled={!questions.length}
             >
-              <Play size={16} fill="currentColor" /> Start mini quest{" "}
+              <Play size={16} fill="currentColor" />{" "}
+              {isReview ? "Start smart review" : "Start quick quest"}{" "}
               <span>
-                {Math.min(MINI_QUEST_SIZE, questions.length)} questions
+                {isReview
+                  ? questions.length
+                  : Math.min(QUICK_QUEST_SIZE, questions.length)}{" "}
+                questions
               </span>
             </button>
+            {!isReview && (
+              <button
+                className="secondary-button wide"
+                onClick={onStartFull}
+                disabled={!questions.length}
+              >
+                <Trophy size={16} /> Try the full challenge{" "}
+                <span>
+                  {Math.min(FULL_QUEST_SIZE, questions.length)} questions
+                </span>
+              </button>
+            )}
             <button
               className="secondary-button wide"
               onClick={onDownload}
@@ -1483,6 +1503,7 @@ function QuizView({
   selectedAnswer,
   revealed,
   score,
+  isReview,
   onBack,
   onAnswer,
   onDraft,
@@ -1497,6 +1518,7 @@ function QuizView({
   selectedAnswer?: string;
   revealed: boolean;
   score: number;
+  isReview: boolean;
   onBack: () => void;
   onAnswer: (answer: string) => void;
   onDraft: (answer: string) => void;
@@ -1523,7 +1545,14 @@ function QuizView({
       </div>
       <div className="quiz-progress" aria-live="polite">
         <div>
-          <span>{topic.name} · Mini quest</span>
+          <span>
+            {topic.name} ·{" "}
+            {isReview
+              ? "Smart review"
+              : total > QUICK_QUEST_SIZE
+                ? "Full challenge"
+                : "Quick quest"}
+          </span>
           <strong>
             {index + 1}
             <small> / {total}</small>

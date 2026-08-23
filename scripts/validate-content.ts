@@ -4,6 +4,7 @@ import {
 } from "../src/data/questionBank";
 import { YEAR_5_CORE_EXPANSION } from "../src/data/year5CoreExpansion";
 import { YEAR_5_LESSONS } from "../src/data/year5Lessons";
+import { YEAR_5_MORE_QUESTIONS } from "../src/data/year5MoreQuestions";
 import { YEAR_5_QUESTION_EXPANSION } from "../src/data/year5QuestionExpansion";
 import {
   SUBJECTS,
@@ -89,6 +90,7 @@ for (const subject of SUBJECTS) {
   }
   const expansionTopics = new Set([
     ...Object.keys(YEAR_5_CORE_EXPANSION[subject] ?? {}),
+    ...Object.keys(YEAR_5_MORE_QUESTIONS[subject] ?? {}),
     ...Object.keys(YEAR_5_QUESTION_EXPANSION[subject] ?? {}),
   ]);
   for (const expansionTopic of expansionTopics) {
@@ -106,19 +108,22 @@ for (const subject of SUBJECTS) {
     year5SourcedQuestions += sourcedQuestions;
     if (!topicQuestions.length)
       errors.push(`missing source-backed Year 5 topic: ${subject}/${topic}`);
-    if (topicQuestions.length < 6)
+    if (topicQuestions.length < 10)
       errors.push(
-        `Year 5 topic needs at least 6 questions: ${subject}/${topic}`,
+        `Year 5 topic needs at least 10 questions: ${subject}/${topic}`,
       );
-    if (sourcedQuestions < 6)
+    if (sourcedQuestions < 10)
       errors.push(
-        `Year 5 topic needs at least 6 GOV.UK-sourced questions: ${subject}/${topic}`,
+        `Year 5 topic needs at least 10 GOV.UK-sourced questions: ${subject}/${topic}`,
       );
   }
   for (const topic of actualTopics) {
     for (const question of STATIC_QUESTION_BANK[subject][topic] ?? []) {
       const isExpansion = Boolean(
         YEAR_5_CORE_EXPANSION[subject]?.[topic]?.some(
+          (item) => item.id === question.id,
+        ) ||
+        YEAR_5_MORE_QUESTIONS[subject]?.[topic]?.some(
           (item) => item.id === question.id,
         ) ||
         YEAR_5_QUESTION_EXPANSION[subject]?.[topic]?.some(

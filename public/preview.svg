@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-labelledby="title desc">
   <title id="title">School Quest Year 5 learning adventures</title>
-  <desc id="desc">A colourful preview card showing five Year 5 subjects, short lessons, mini quests and printable worksheets.</desc>
+  <desc id="desc">A colourful preview card showing five Year 5 subjects, short lessons, practice quests and printable worksheets.</desc>
   <defs>
     <linearGradient id="background" x1="80" y1="30" x2="1120" y2="600" gradientUnits="userSpaceOnUse">
       <stop stop-color="#f5f1ff"/>
@@ -32,7 +32,7 @@
   <text x="170" y="112" fill="#2c2350" font-family="Inter, ui-rounded, system-ui, sans-serif" font-size="48" font-weight="800" letter-spacing="-1.5">School Quest</text>
   <text x="76" y="212" fill="#2c2350" font-family="Inter, ui-rounded, system-ui, sans-serif" font-size="68" font-weight="850" letter-spacing="-2.2">Year 5 learning,</text>
   <text x="76" y="286" fill="#7257e8" font-family="Inter, ui-rounded, system-ui, sans-serif" font-size="68" font-weight="850" letter-spacing="-2.2">made adventurous.</text>
-  <text x="80" y="344" fill="#625a73" font-family="Inter, system-ui, sans-serif" font-size="25">56 short lessons · 336 practice questions · printable topic packs</text>
+  <text x="80" y="344" fill="#625a73" font-family="Inter, system-ui, sans-serif" font-size="25">56 short lessons · 560 practice questions · printable topic packs</text>
 
   <g font-family="Inter, system-ui, sans-serif" font-size="19" font-weight="700" filter="url(#shadow)">
     <g transform="translate(80 392)">
